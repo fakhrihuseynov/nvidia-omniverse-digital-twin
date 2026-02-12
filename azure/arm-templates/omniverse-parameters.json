@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "eastus2"
+        },
+        "adminUsername": {
+            "value": "azureuser"
+        },
+        "windowsAdminPassword": {
+            "value": ""
+        },
+        "linuxSshPublicKey": {
+            "value": "<REPLACE_WITH_SSH_PUBLIC_KEY>"
+        },
+        "virtualNetworkName": {
+            "value": "omniverse-vnet"
+        },
+        "frontendSubnetName": {
+            "value": "frontend-subnet"
+        },
+        "backendSubnetName": {
+            "value": "backend-subnet"
+        },
+        "vnetAddressPrefix": {
+            "value": "10.0.0.0/16"
+        },
+        "frontendSubnetPrefix": {
+            "value": "10.0.1.0/24"
+        },
+        "backendSubnetPrefix": {
+            "value": "10.0.2.0/24"
+        },
+        "frontendVmSize": {
+            "value": "Standard_NV36ads_A10_v5"
+        },
+        "backendVmSize": {
+            "value": "Standard_NC24ads_A100_v4"
+        }
+    }
+}
