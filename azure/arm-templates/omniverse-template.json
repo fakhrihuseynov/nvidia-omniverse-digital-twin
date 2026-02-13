@@ -77,6 +77,14 @@
     "postgresVersion": {
       "type": "string",
       "defaultValue": "[parameters('postgresVersion')]"
+    },
+    "publicIpSkuName": {
+      "type": "string",
+      "defaultValue": "[parameters('publicIpSkuName')]"
+    },
+    "publicIpAllocationMethod": {
+      "type": "string",
+      "defaultValue": "[parameters('publicIpAllocationMethod')]"
     }
   },
   "variables": {
@@ -191,8 +199,10 @@
       "apiVersion": "2021-05-01",
       "name": "[variables('frontendPipName')]",
       "location": "[parameters('location')]",
-      "sku": { "name": "Standard" },
-      "properties": { "publicIPAllocationMethod": "Dynamic" }
+      "sku": { "name": "[parameters('publicIpSkuName')]" },
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIpAllocationMethod')]"
+      }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
