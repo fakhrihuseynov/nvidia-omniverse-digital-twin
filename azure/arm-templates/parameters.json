@@ -8,12 +8,6 @@
         "adminUsername": {
             "value": "azureuser"
         },
-        "windowsAdminPassword": {
-            "value": ""
-        },
-        "linuxSshPublicKey": {
-            "value": "<REPLACE_WITH_SSH_PUBLIC_KEY>"
-        },
         "virtualNetworkName": {
             "value": "omniverse-vnet"
         },
@@ -35,8 +29,26 @@
         "frontendVmSize": {
             "value": "Standard_NV36ads_A10_v5"
         },
-        "backendVmSize": {
-            "value": "Standard_NC24ads_A100_v4"
+        "postgresServerName": {
+            "value": "promscale-pg"
+        },
+        "postgresAdminUser": {
+            "value": "pgadmin"
+        },
+        "postgresSkuName": {
+            "value": "Standard_D2s_v3"
+        },
+        "postgresSkuTier": {
+            "value": "GeneralPurpose"
+        },
+        "postgresSkuCapacity": {
+            "value": 2
+        },
+        "postgresStorageGB": {
+            "value": 200
+        },
+        "postgresVersion": {
+            "value": "14"
         }
     }
 }

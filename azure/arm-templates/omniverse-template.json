@@ -4,51 +4,85 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "[parameters('location')]",
       "metadata": { "description": "Deployment location." }
     },
     "adminUsername": {
       "type": "string",
+      "defaultValue": "[parameters('adminUsername')]",
       "metadata": { "description": "Admin username for VMs." }
     },
     "windowsAdminPassword": {
       "type": "secureString",
       "metadata": { "description": "Password for Windows VM admin." }
     },
-    "linuxSshPublicKey": {
-      "type": "string",
-      "metadata": {
-        "description": "SSH public key for Linux VM (openssh format)."
-      }
-    },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "omniverse-vnet"
+      "defaultValue": "[parameters('virtualNetworkName')]"
     },
     "frontendSubnetName": {
       "type": "string",
-      "defaultValue": "frontend-subnet"
+      "defaultValue": "[parameters('frontendSubnetName')]"
     },
-    "backendSubnetName": { "type": "string", "defaultValue": "backend-subnet" },
-    "vnetAddressPrefix": { "type": "string", "defaultValue": "10.0.0.0/16" },
-    "frontendSubnetPrefix": { "type": "string", "defaultValue": "10.0.1.0/24" },
-    "backendSubnetPrefix": { "type": "string", "defaultValue": "10.0.2.0/24" },
+    "backendSubnetName": {
+      "type": "string",
+      "defaultValue": "[parameters('backendSubnetName')]"
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "[parameters('vnetAddressPrefix')]"
+    },
+    "frontendSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "[parameters('frontendSubnetPrefix')]"
+    },
+    "backendSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "[parameters('backendSubnetPrefix')]"
+    },
     "frontendVmSize": {
       "type": "string",
-      "defaultValue": "Standard_NV36ads_A10_v5"
+      "defaultValue": "[parameters('frontendVmSize')]"
     },
-    "backendVmSize": {
+    "postgresServerName": {
       "type": "string",
-      "defaultValue": "Standard_NC24ads_A100_v4"
+      "defaultValue": "[parameters('postgresServerName')]"
+    },
+    "postgresAdminUser": {
+      "type": "string",
+      "defaultValue": "[parameters('postgresAdminUser')]"
+    },
+    "postgresAdminPassword": {
+      "type": "secureString",
+      "metadata": { "description": "PostgreSQL admin password" }
+    },
+    "postgresSkuName": {
+      "type": "string",
+      "defaultValue": "[parameters('postgresSkuName')]"
+    },
+    "postgresSkuTier": {
+      "type": "string",
+      "defaultValue": "[parameters('postgresSkuTier')]"
+    },
+    "postgresSkuCapacity": {
+      "type": "int",
+      "defaultValue": "[parameters('postgresSkuCapacity')]"
+    },
+    "postgresStorageGB": {
+      "type": "int",
+      "defaultValue": "[parameters('postgresStorageGB')]",
+      "minValue": 32,
+      "maxValue": 4096
+    },
+    "postgresVersion": {
+      "type": "string",
+      "defaultValue": "[parameters('postgresVersion')]"
     }
   },
   "variables": {
     "frontendVmName": "omniverse-frontend-vm",
-    "backendVmName": "omniverse-backend-vm",
     "frontendNicName": "frontend-nic",
-    "backendNicName": "backend-nic",
     "frontendPipName": "frontend-pip",
-    "backendPipName": "backend-pip",
     "nsgName": "omniverse-nsg"
   },
   "resources": [
@@ -157,13 +191,7 @@
       "apiVersion": "2021-05-01",
       "name": "[variables('frontendPipName')]",
       "location": "[parameters('location')]",
-      "properties": { "publicIPAllocationMethod": "Dynamic" }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-05-01",
-      "name": "[variables('backendPipName')]",
-      "location": "[parameters('location')]",
+      "sku": { "name": "Standard" },
       "properties": { "publicIPAllocationMethod": "Dynamic" }
     },
     {
@@ -187,36 +215,6 @@
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('frontendPipName'))]"
-              }
-            }
-          }
-        ],
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2021-05-01",
-      "name": "[variables('backendNicName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('backendPipName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('backendSubnetName'))]"
-              },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('backendPipName'))]"
               }
             }
           }
@@ -264,46 +262,21 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2021-11-01",
-      "name": "[variables('backendVmName')]",
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2022-01-20-preview",
+      "name": "[parameters('postgresServerName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('backendNicName'))]"
-      ],
       "properties": {
-        "hardwareProfile": { "vmSize": "[parameters('backendVmSize')]" },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "22_04-lts",
-            "version": "latest"
-          },
-          "osDisk": { "createOption": "FromImage" }
-        },
-        "osProfile": {
-          "computerName": "[variables('backendVmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": true,
-            "ssh": {
-              "publicKeys": [
-                {
-                  "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-                  "keyData": "[parameters('linuxSshPublicKey')]"
-                }
-              ]
-            }
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('backendNicName'))]"
-            }
-          ]
-        }
+        "version": "[parameters('postgresVersion')]",
+        "administratorLogin": "[parameters('postgresAdminUser')]",
+        "administratorLoginPassword": "[parameters('postgresAdminPassword')]",
+        "storage": { "storageSizeGB": "[parameters('postgresStorageGB')]" },
+        "network": { "publicNetworkAccess": "Enabled" }
+      },
+      "sku": {
+        "name": "[parameters('postgresSkuName')]",
+        "tier": "[parameters('postgresSkuTier')]",
+        "capacity": "[parameters('postgresSkuCapacity')]"
       }
     }
   ],
@@ -312,17 +285,17 @@
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('frontendPipName'))).ipAddress]"
     },
-    "backendPublicIp": {
-      "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('backendPipName'))).ipAddress]"
-    },
     "frontendVmId": {
       "type": "string",
       "value": "[resourceId('Microsoft.Compute/virtualMachines', variables('frontendVmName'))]"
     },
-    "backendVmId": {
+    "postgresHost": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Compute/virtualMachines', variables('backendVmName'))]"
+      "value": "[reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName'))).fullyQualifiedDomainName]"
+    },
+    "postgresResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName'))]"
     }
   }
 }
