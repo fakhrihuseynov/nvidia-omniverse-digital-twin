@@ -51,7 +51,7 @@
             "value": 2
         },
         "postgresStorageGB": {
-            "value": 200
+            "value": 32
         },
         "postgresVersion": {
             "value": "14"

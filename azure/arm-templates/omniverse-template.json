@@ -92,6 +92,7 @@
     "frontendNicName": "frontend-nic",
     "frontendPipName": "frontend-pip",
     "nsgName": "omniverse-nsg"
+    ,"postgresStorageGBInt": "[int(parameters('postgresStorageGB'))]"
   },
   "resources": [
     {
@@ -254,7 +255,7 @@
           "osDisk": { "createOption": "FromImage" }
         },
         "osProfile": {
-          "computerName": "[variables('frontendVmName')]",
+          "computerName": "[substring(variables('frontendVmName'), 0, 15)]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('windowsAdminPassword')]",
           "windowsConfiguration": {
@@ -280,7 +281,7 @@
         "version": "[parameters('postgresVersion')]",
         "administratorLogin": "[parameters('postgresAdminUser')]",
         "administratorLoginPassword": "[parameters('postgresAdminPassword')]",
-        "storage": { "storageSizeGB": "[parameters('postgresStorageGB')]" },
+        "storage": { "storageSizeGB": "[variables('postgresStorageGBInt')]" },
         "network": { "publicNetworkAccess": "Enabled" }
       },
       "sku": {
